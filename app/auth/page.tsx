@@ -2,77 +2,41 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ShieldCheck, ArrowRight, UserRound, Shield, CheckCircle2, Loader2, KeyRound, Smartphone } from "lucide-react"
+import { ShieldCheck, ArrowRight, UserRound, Shield, CheckCircle2, Loader2, Mail, LockKeyhole } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 type AuthMode = "login" | "register"
 type UserRole = "citizen" | "admin"
-type Step = "phone" | "otp" | "success"
+type Step = "credentials" | "success"
 
 export default function AuthPage() {
   const router = useRouter()
   const [mode, setMode] = useState<AuthMode>("login")
   const [role, setRole] = useState<UserRole>("citizen")
-  const [step, setStep] = useState<Step>("phone")
+  const [step, setStep] = useState<Step>("credentials")
+  const roleLabel = role === "admin" ? "officer" : "citizen"
   
-  const [name, setName] = useState("")
-  const [phone, setPhone] = useState("")
-  const [otp, setOtp] = useState(["", "", "", ""])
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   
-  const otpRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ]
+  const emailRef = useRef<HTMLInputElement>(null)
 
   // Reset states when switching mode or role
   useEffect(() => {
-    setStep("phone")
-    setOtp(["", "", "", ""])
+    setStep("credentials")
     setIsLoading(false)
+    setPassword("")
+    setTimeout(() => emailRef.current?.focus(), 0)
   }, [mode, role])
 
-  const handlePhoneSubmit = (e: React.FormEvent) => {
+  const handleCredentialsSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!phone || (mode === "register" && !name)) return
+    if (!email || !password) return
     
     setIsLoading(true)
     // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      setStep("otp")
-      // Auto focus first OTP input
-      setTimeout(() => otpRefs[0].current?.focus(), 100)
-    }, 1200)
-  }
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return
-    
-    const newOtp = [...otp]
-    newOtp[index] = value.substring(value.length - 1)
-    setOtp(newOtp)
-
-    if (value && index < 3) {
-      otpRefs[index + 1].current?.focus()
-    }
-  }
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpRefs[index - 1].current?.focus()
-    }
-  }
-
-  const handleOtpSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (otp.join("").length !== 4) return
-    
-    setIsLoading(true)
-    // Simulate verification
     setTimeout(() => {
       setIsLoading(false)
       setStep("success")
@@ -84,8 +48,8 @@ export default function AuthPage() {
         } else {
           router.push("/citizen/dashboard")
         }
-      }, 1500)
-    }, 1500)
+      }, 900)
+    }, 1200)
   }
 
   const containerVariants = {
@@ -158,47 +122,47 @@ export default function AuthPage() {
               exit="exit"
               className="w-full"
             >
-              {step === "phone" && (
-                <form onSubmit={handlePhoneSubmit} className="space-y-5">
+              {step === "credentials" && (
+                <form onSubmit={handleCredentialsSubmit} className="space-y-5">
                   <motion.div variants={itemVariants} className="text-center mb-6">
                     <h2 className="text-2xl font-black">
                       {mode === "login" ? "Welcome back" : "Create an account"}
                     </h2>
                     <p className="mt-2 text-sm text-white/50">
                       {mode === "login" 
-                        ? `Sign in to access your ${role} dashboard` 
-                        : `Register as a new ${role} to get started`}
+                        ? `Sign in to access your ${roleLabel} dashboard` 
+                        : `Register as a new ${roleLabel} to get started`}
                     </p>
                   </motion.div>
 
-                  {mode === "register" && (
-                    <motion.div variants={itemVariants} className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-wider text-white/50">Full Name</label>
-                      <div className="relative">
-                        <UserRound className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-                        <input 
-                          type="text" 
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          placeholder="Ram Vishwakarma" 
-                          className="w-full rounded-xl border border-white/10 bg-white/5 py-3.5 pl-12 pr-4 text-white outline-none transition-all placeholder:text-white/20 focus:border-[#22d3ee] focus:bg-white/10 focus:ring-4 focus:ring-[#22d3ee]/20"
-                          required
-                        />
-                      </div>
-                    </motion.div>
-                  )}
+                  <motion.div variants={itemVariants} className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-white/50">Email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                      <input 
+                        ref={emailRef}
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        className="w-full rounded-xl border border-white/10 bg-white/5 py-3.5 pl-12 pr-4 text-white outline-none transition-all placeholder:text-white/20 focus:border-[#22d3ee] focus:bg-white/10 focus:ring-4 focus:ring-[#22d3ee]/20"
+                        required
+                      />
+                    </div>
+                  </motion.div>
 
                   <motion.div variants={itemVariants} className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-white/50">Mobile Number</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-white/50">Password</label>
                     <div className="relative">
-                      <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-                      <div className="absolute left-11 top-1/2 -translate-y-1/2 text-white/60 font-bold">+91</div>
+                      <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                       <input 
-                        type="tel" 
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="98765 43210" 
-                        className="w-full rounded-xl border border-white/10 bg-white/5 py-3.5 pl-20 pr-4 text-white outline-none transition-all placeholder:text-white/20 focus:border-[#22d3ee] focus:bg-white/10 focus:ring-4 focus:ring-[#22d3ee]/20 font-mono tracking-wider"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder={mode === "login" ? "Enter your password" : "Create a password"}
+                        autoComplete={mode === "login" ? "current-password" : "new-password"}
+                        className="w-full rounded-xl border border-white/10 bg-white/5 py-3.5 pl-12 pr-4 text-white outline-none transition-all placeholder:text-white/20 focus:border-[#22d3ee] focus:bg-white/10 focus:ring-4 focus:ring-[#22d3ee]/20"
                         required
                       />
                     </div>
@@ -212,7 +176,8 @@ export default function AuthPage() {
                   >
                     {isLoading ? <Loader2 className="animate-spin" size={20} /> : (
                       <>
-                        Send OTP <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+                        {mode === "login" ? "Sign in" : "Create account"}{" "}
+                        <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
                       </>
                     )}
                   </motion.button>
@@ -230,62 +195,6 @@ export default function AuthPage() {
                 </form>
               )}
 
-              {step === "otp" && (
-                <form onSubmit={handleOtpSubmit} className="space-y-6">
-                  <motion.div variants={itemVariants} className="text-center mb-8">
-                    <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-[#22d3ee]/20 text-[#22d3ee]">
-                      <KeyRound size={24} />
-                    </div>
-                    <h2 className="text-2xl font-black">Verify your number</h2>
-                    <p className="mt-2 text-sm text-white/50">
-                      We've sent a 4-digit code to <br/>
-                      <span className="font-mono text-white">+91 {phone}</span>
-                    </p>
-                  </motion.div>
-
-                  <motion.div variants={itemVariants} className="flex justify-center gap-3">
-                    {otp.map((digit, index) => (
-                      <input
-                        key={index}
-                        ref={otpRefs[index]}
-                        type="text"
-                        inputMode="numeric"
-                        value={digit}
-                        onChange={(e) => handleOtpChange(index, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                        className="h-14 w-12 rounded-xl border border-white/10 bg-white/5 text-center font-mono text-xl font-bold text-white outline-none transition-all focus:border-[#f97316] focus:bg-[#f97316]/10 focus:ring-4 focus:ring-[#f97316]/20"
-                        maxLength={1}
-                      />
-                    ))}
-                  </motion.div>
-
-                  <motion.div variants={itemVariants} className="text-center">
-                    <span className="inline-flex items-center gap-2 rounded-lg bg-[#f97316]/10 px-3 py-1 text-xs font-bold text-[#f97316]">
-                      Demo mode: Enter any 4 digits (e.g., 1234)
-                    </span>
-                  </motion.div>
-
-                  <motion.button 
-                    variants={itemVariants}
-                    disabled={isLoading || otp.join("").length !== 4}
-                    type="submit" 
-                    className="group relative mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22d3ee] to-[#06b6d4] py-4 font-black text-black shadow-[0_0_20px_rgba(34,211,238,0.3)] transition-all hover:shadow-[0_0_30px_rgba(34,211,238,0.5)] disabled:opacity-50 disabled:hover:shadow-none"
-                  >
-                    {isLoading ? <Loader2 className="animate-spin text-black" size={20} /> : "Verify & Continue"}
-                  </motion.button>
-
-                  <motion.div variants={itemVariants} className="mt-6 text-center text-sm">
-                    <button 
-                      type="button" 
-                      onClick={() => setStep("phone")}
-                      className="text-white/50 hover:text-white transition-colors"
-                    >
-                      Change phone number
-                    </button>
-                  </motion.div>
-                </form>
-              )}
-
               {step === "success" && (
                 <motion.div variants={containerVariants} className="flex flex-col items-center justify-center py-8 text-center">
                   <motion.div 
@@ -298,7 +207,7 @@ export default function AuthPage() {
                   </motion.div>
                   <motion.h2 variants={itemVariants} className="text-3xl font-black text-white">Verified!</motion.h2>
                   <motion.p variants={itemVariants} className="mt-3 text-white/60">
-                    Redirecting to your {role} portal...
+                    Redirecting to your {roleLabel} portal...
                   </motion.p>
                 </motion.div>
               )}
